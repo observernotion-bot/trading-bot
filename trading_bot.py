@@ -6,21 +6,23 @@ import os
 from datetime import datetime
 from groq import Groq
 
-# ============ المفاتيح من Railway ============
-import os
-GROQ_KEY = os.environ.get("GROQ_API_KEY") or "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"
+# ============ المفاتيح ============
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or "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"
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN") or "8705246619:AAEocz5YRx8-ixRCsDJERirWFr-UYY28rZs"
 TELEGRAM_CHAT = os.environ.get("TELEGRAM_CHAT") or "8607532338"
 NEWS_KEY = os.environ.get("NEWS_KEY") or "08ab77f19e6847eaa2fccf75afc252d4"
 
-client = Groq(api_key=GROQ_KEY)
+client = Groq(api_key=GROQ_API_KEY)
 sent_news = set()
 
-SYSTEM_PROMPT = """You are a professional macroeconomic analyst at JPMorgan.
-ALWAYS respond in Arabic only. No Japanese, Chinese, or any other language.
-Think in this structure: EVENT -> MACRO DRIVER -> TRANSMISSION -> MARKET PRICING
-Focus on: Real yields, Fed expectations, USD strength, Risk sentiment.
-Assets: Gold (XAU/USD) and NAS100 only."""
+SYSTEM_PROMPT = """انت محلل اقتصادي كبير متخصص في الذهب XAU/USD و NAS100.
+
+قواعد صارمة جدا:
+1. اكتب باللغة العربية الفصحى فقط — ممنوع تماما اي حرف صيني او ياباني او كوري او روسي او فارسي او اي لغة اخرى غير العربية والارقام الانجليزية
+2. لا تستخدم كلمات مثل قد / ربما / من المحتمل — كن حاسما ومباشرا
+3. اشرح دائما المنطق الكامل: لماذا يحدث هذا وكيف يؤثر على الاسواق
+4. فكر دائما بهذه السلسلة: الحدث → تاثيره على الفائدة → تاثيره على الدولار → تاثيره على الذهب و NAS100
+5. كن دقيقا ومحددا مثل محللي Goldman Sachs و JPMorgan"""
 
 def send_telegram(msg, chat_id=TELEGRAM_CHAT):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -71,35 +73,36 @@ def monitor_breaking_news():
                         model="llama-3.3-70b-versatile",
                         messages=[
                             {"role": "system", "content": SYSTEM_PROMPT},
-                            {"role": "user", "content": f"""حلل هذا الخبر العاجل باللغة العربية الفصحى فقط.
+                            {"role": "user", "content": f"""حلل هذا الخبر العاجل. اكتب باللغة العربية الفصحى فقط بدون اي كلمات اجنبية.
 
 الخبر: {content}
 
-اكتب بهذا الشكل:
+اكتب بهذا الشكل الدقيق:
 
-📰 ملخص الخبر: [شرح بسيط للخبر في جملتين]
+🚨 *ماذا حدث؟*
+[اشرح الخبر بجملتين بسيطتين كانك تشرح لشخص عادي]
 
-⚡ لماذا هو مهم: [جملة واحدة]
+❓ *لماذا هذا مهم للاسواق؟*
+[اشرح السبب المنطقي في جملة واحدة]
 
 نوع الحدث: [حرب / سياسة نقدية / تضخم / اقتصاد / جيوسياسي / طاقة]
+درجة الخطر: [🟢 عادي / 🟡 مهم / 🔴 خطر عالي]
 
-درجة الخطر: [🟢 عادي او 🟡 مهم او 🔴 خطر عالي]
+🔗 *المنطق الاقتصادي الكامل:*
+الحدث → [تاثيره على توقعات الفائدة] → [تاثيره على الدولار] → [النتيجة النهائية على الذهب و NAS100]
 
-🔗 سلسلة التاثير:
-الحدث → [تاثير على السياسة النقدية] → [تاثير على الدولار] → [تاثير على الاصول]
+🥇 *الذهب:* [صعود قوي / صعود / محايد / هبوط / هبوط قوي]
+*السبب:* [اشرح لماذا بجملة واحدة محددة وحاسمة]
 
-🥇 تاثير الذهب: [صعود قوي / صعود / محايد / هبوط / هبوط قوي]
-السبب المنطقي: [جملة واحدة بالعربية فقط]
+💻 *NAS100:* [صعود قوي / صعود / محايد / هبوط / هبوط قوي]
+*السبب:* [اشرح لماذا بجملة واحدة محددة وحاسمة]
 
-💻 تاثير NAS100: [صعود قوي / صعود / محايد / هبوط / هبوط قوي]
-السبب المنطقي: [جملة واحدة بالعربية فقط]
-
-وقت التاثير: [فوري / قصير المدى / طويل المدى]"""}
+⏱ وقت التاثير: [فوري / ايام / اسابيع]"""}
                         ],
-                        max_tokens=500
+                        max_tokens=600
                     )
                     analysis = resp.choices[0].message.content
-                    msg = f"🚨 *خبر عاجل*\n\n📰 *{title[:150]}*\n\n{analysis}\n\n⏰ {datetime.now().strftime('%H:%M')} توقيت المغرب"
+                    msg = f"🚨 *خبر عاجل — {datetime.now().strftime('%H:%M')} المغرب*\n\n📰 *{title[:150]}*\n\n{analysis}"
                     send_telegram(msg)
                     sent_news.add(url)
                     time.sleep(5)
@@ -109,19 +112,21 @@ def monitor_breaking_news():
 
 def daily_report():
     print(f"[{datetime.now()}] التقرير اليومي...")
-    send_telegram("⏳ *جاري اعداد التقرير اليومي الشامل...*\nالرجاء الانتظار دقيقة 🔄")
+    send_telegram("⏳ *جاري اعداد التقرير اليومي الشامل...*\nيبحث البوت في كل الاخبار العالمية الان 🔄")
 
-    a1 = get_news(query="federal reserve interest rate inflation CPI GDP", count=6)
-    a2 = get_news(query="gold price XAU precious metals", count=4)
-    a3 = get_news(query="nasdaq technology stocks earnings", count=4)
-    a4 = get_news(query="war conflict geopolitical oil energy", count=4)
+    a1 = get_news(query="federal reserve interest rate inflation CPI GDP unemployment", count=8)
+    a2 = get_news(query="gold price XAU precious metals central bank", count=5)
+    a3 = get_news(query="nasdaq technology stocks earnings AI", count=5)
+    a4 = get_news(query="war conflict geopolitical china russia oil energy", count=5)
+    a5 = get_news(query="dollar DXY treasury bonds yields", count=5)
 
-    all_articles = a1 + a2 + a3 + a4
+    all_articles = a1 + a2 + a3 + a4 + a5
     if not all_articles:
         send_telegram("تعذر الحصول على اخبار كافية اليوم")
         return
 
-    headlines = "\n".join([f"- {a['title']}" for a in all_articles[:20] if a.get('title')])
+    headlines = "\n".join([f"- {a['title']}" for a in all_articles[:25] if a.get('title')])
+    
     hour = datetime.now().hour
     if hour < 12:
         period = "الصباحي"
@@ -135,58 +140,80 @@ def daily_report():
             model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"""اكتب تقريرا يوميا شاملا باللغة العربية الفصحى فقط — ممنوع اي حروف صينية او يابانية.
+                {"role": "user", "content": f"""اكتب تقريرا يوميا شاملا باللغة العربية الفصحى فقط — ممنوع اي كلمة اجنبية.
 
 الاخبار العالمية اليوم:
 {headlines}
 
-اكتب التقرير {period} بهذا الهيكل:
+اكتب التقرير {period} بهذا الهيكل الدقيق:
 
-📅 *التقرير {period} الشامل — {datetime.now().strftime('%Y/%m/%d %H:%M')} المغرب*
-🏦 *تحليل مستوى JPMorgan*
-
-━━━━━━━━━━━━━━━━━━
-📰 *اولا: ملخص الاخبار الاقتصادية*
-[اهم 4 اخبار مع شرح بسيط لكل خبر وسبب اهميته]
+📅 *التقرير {period} — {datetime.now().strftime('%Y/%m/%d')} — {datetime.now().strftime('%H:%M')} المغرب*
 
 ━━━━━━━━━━━━━━━━━━
-🔗 *ثانيا: سلسلة التاثير الكلي*
-[اشرح كيف تؤثر الاخبار على: الفائدة → الدولار → الذهب → NAS100]
+📰 *اولا: اهم الاحداث الاقتصادية اليوم*
+
+لكل حدث اكتب:
+• *الحدث:* [ماذا حدث بالضبط]
+• *الشرح:* [لماذا هذا مهم بجملة بسيطة]
+• *التاثير الفوري:* [كيف يؤثر على الاسواق]
+
+[اذكر 4 احداث على الاقل]
+
+━━━━━━━━━━━━━━━━━━
+🔗 *ثانيا: المنطق الاقتصادي الكامل اليوم*
+
+اشرح كيف تتصل الاحداث ببعضها:
+الاحداث اليوم → تاثيرها على توقعات الفائدة → تاثيرها على الدولار → النتيجة على الذهب و NAS100
 
 ━━━━━━━━━━━━━━━━━━
 🥇 *ثالثا: تحليل الذهب XAU/USD*
-• الاتجاه العام: [صعود قوي / صعود / محايد / هبوط / هبوط قوي]
-• التحيز الاساسي: [3 جمل منطقية]
-• العوامل الداعمة:
-  1. [عامل اول]
-  2. [عامل ثاني]
-• المخاطر: [خطر رئيسي]
-• مستويات مهمة: دعم ... مقاومة ...
+
+• *الاتجاه:* [صعود قوي / صعود / محايد / هبوط / هبوط قوي]
+• *لماذا؟* [3 اسباب منطقية محددة وحاسمة]
+• *العوامل الداعمة:*
+  1. [عامل محدد]
+  2. [عامل محدد]
+• *المخاطر الرئيسية:* [خطر واحد محدد]
+• *مستويات مهمة:* دعم ... / مقاومة ...
 
 ━━━━━━━━━━━━━━━━━━
 💻 *رابعا: تحليل NAS100*
-• الاتجاه العام: [صعود قوي / صعود / محايد / هبوط / هبوط قوي]
-• التحيز الاساسي: [3 جمل منطقية]
-• العوامل الداعمة:
-  1. [عامل اول]
-  2. [عامل ثاني]
-• المخاطر: [خطر رئيسي]
-• مستويات مهمة: دعم ... مقاومة ...
+
+• *الاتجاه:* [صعود قوي / صعود / محايد / هبوط / هبوط قوي]
+• *لماذا؟* [3 اسباب منطقية محددة وحاسمة]
+• *العوامل الداعمة:*
+  1. [عامل محدد]
+  2. [عامل محدد]
+• *المخاطر الرئيسية:* [خطر واحد محدد]
+• *مستويات مهمة:* دعم ... / مقاومة ...
 
 ━━━━━━━━━━━━━━━━━━
-📊 *خامسا: السيناريوهات*
-🟢 Bull Case: [الشرط + التاثير]
-🟡 Base Case: [الشرط + التاثير]
-🔴 Bear Case: [الشرط + التاثير]
+📊 *خامسا: السيناريوهات المحتملة*
+
+🟢 *السيناريو المتفائل:*
+الشرط: [ما يجب ان يحدث]
+النتيجة على الذهب: [اتجاه + سبب]
+النتيجة على NAS100: [اتجاه + سبب]
+
+🟡 *السيناريو الاساسي الاكثر ترجيحا:*
+الشرط: [ما يجب ان يحدث]
+النتيجة على الذهب: [اتجاه + سبب]
+النتيجة على NAS100: [اتجاه + سبب]
+
+🔴 *السيناريو المتشائم:*
+الشرط: [ما يجب ان يحدث]
+النتيجة على الذهب: [اتجاه + سبب]
+النتيجة على NAS100: [اتجاه + سبب]
 
 ━━━━━━━━━━━━━━━━━━
 ⚡ *سادسا: الخلاصة التنفيذية*
-• توصية الذهب: [جملة حاسمة]
-• توصية NAS100: [جملة حاسمة]
-• اهم حدث للمراقبة: [حدث واحد]
-• مستوى الخطر: 🟢 منخفض / 🟡 متوسط / 🔴 عالي"""}
+
+• *توصية الذهب:* [جملة حاسمة واحدة]
+• *توصية NAS100:* [جملة حاسمة واحدة]
+• *اهم حدث يجب مراقبته:* [حدث واحد محدد]
+• *مستوى الخطر العام:* 🟢 منخفض / 🟡 متوسط / 🔴 عالي"""}
             ],
-            max_tokens=2000
+            max_tokens=2500
         )
         report = resp.choices[0].message.content
         if len(report) < 300:
@@ -211,16 +238,23 @@ def answer_question(user_question, chat_id):
                 {"role": "user", "content": f"""السؤال: {user_question}
 {news_context}
 
-اجب باللغة العربية الفصحى فقط بهذا الشكل:
+اجب باللغة العربية الفصحى فقط — ممنوع اي كلمة اجنبية.
 
-📰 السياق: [جملتان تشرح الموضوع ببساطة]
+اكتب بهذا الشكل:
 
-🔗 سلسلة التاثير: الحدث → [تاثير] → [تاثير على الذهب و NAS100]
+📰 *الموضوع:*
+[اشرح الموضوع بجملتين بسيطتين]
 
-🥇 الذهب: [الاتجاه + السبب في جملة]
-💻 NAS100: [الاتجاه + السبب في جملة]
+🔗 *المنطق الاقتصادي:*
+الحدث → [تاثير على الفائدة] → [تاثير على الدولار] → [تاثير على الذهب و NAS100]
 
-⚡ درجة الخطر: منخفض / متوسط / عالي"""}
+🥇 *الذهب:* [الاتجاه الحاسم]
+السبب: [جملة واحدة محددة]
+
+💻 *NAS100:* [الاتجاه الحاسم]
+السبب: [جملة واحدة محددة]
+
+⚡ درجة الخطر: 🟢 منخفض / 🟡 متوسط / 🔴 عالي"""}
             ],
             max_tokens=600
         )
@@ -245,7 +279,16 @@ def telegram_polling():
                 if not text or not chat_id:
                     continue
                 if text == "/start":
-                    send_telegram("👋 *مرحبا! انا بوت التحليل الاقتصادي*\n\n✅ تقارير يومية: 08:00 و 14:00 و 20:00\n✅ تنبيهات عاجلة تلقائية\n✅ تحليل مستوى JPMorgan\n\n/report — تقرير فوري\n/news — اخر الاخبار\n/help — المساعدة\n\nاو اكتب اي سؤال 👇", chat_id)
+                    send_telegram(
+                        "👋 *مرحبا! انا بوت التحليل الاقتصادي*\n\n"
+                        "✅ تقرير الصباح: 08:00\n"
+                        "✅ تقرير الظهر: 14:00\n"
+                        "✅ تقرير المساء: 20:00\n"
+                        "✅ تنبيهات عاجلة تلقائية\n\n"
+                        "/report — تقرير فوري شامل\n"
+                        "/news — اخر الاخبار\n"
+                        "/help — المساعدة\n\n"
+                        "او اكتب اي سؤال اقتصادي 👇", chat_id)
                 elif text == "/report":
                     send_telegram("⏳ *جاري اعداد تقرير شامل...*", chat_id)
                     threading.Thread(target=daily_report).start()
@@ -259,7 +302,15 @@ def telegram_polling():
                     else:
                         send_telegram("لا توجد اخبار الان", chat_id)
                 elif text == "/help":
-                    send_telegram("📖 *الاستخدام:*\n\naكتب اي سؤال مثل:\n• ما تاثير رفع الفائدة على الذهب؟\n• هل NAS100 صاعد اليوم؟\n\n/report — تقرير شامل\n/news — اخر الاخبار\n\n🚨 التنبيهات العاجلة تصلك تلقائيا!", chat_id)
+                    send_telegram(
+                        "📖 *كيفية الاستخدام:*\n\n"
+                        "اكتب اي سؤال مثل:\n"
+                        "• ما تاثير رفع الفائدة على الذهب؟\n"
+                        "• هل NAS100 صاعد اليوم؟\n"
+                        "• ماذا يعني ارتفاع التضخم؟\n\n"
+                        "/report — تقرير يومي شامل\n"
+                        "/news — اخر الاخبار\n\n"
+                        "🚨 التنبيهات العاجلة تصلك تلقائيا!", chat_id)
                 else:
                     send_telegram("⏳ *جاري التحليل...*", chat_id)
                     answer = answer_question(text, chat_id)
@@ -269,11 +320,9 @@ def telegram_polling():
             time.sleep(5)
 
 def schedule_jobs():
-    # التقارير الثلاثة — توقيت المغرب UTC+1
     schedule.every().day.at("07:00").do(daily_report)  # 08:00 المغرب
     schedule.every().day.at("13:00").do(daily_report)  # 14:00 المغرب
     schedule.every().day.at("19:00").do(daily_report)  # 20:00 المغرب
-    # مراقبة الاخبار كل 30 دقيقة
     schedule.every(30).minutes.do(monitor_breaking_news)
     print("التقارير: 08:00 و 14:00 و 20:00 توقيت المغرب")
     while True:
@@ -288,7 +337,6 @@ if __name__ == "__main__":
         "✅ تقرير الظهر: 14:00\n"
         "✅ تقرير المساء: 20:00\n"
         "✅ تنبيهات عاجلة: كل 30 دقيقة\n\n"
-        "🏦 تحليل مستوى JPMorgan\n\n"
         "اكتب /help 👇"
     )
     threading.Thread(target=monitor_breaking_news, daemon=True).start()
