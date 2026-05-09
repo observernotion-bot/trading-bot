@@ -7,10 +7,11 @@ from datetime import datetime
 from groq import Groq
 
 # ============ المفاتيح من Railway ============
-GROQ_KEY = os.environ.get("GROQ_KEY")
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-TELEGRAM_CHAT = os.environ.get("TELEGRAM_CHAT")
-NEWS_KEY = os.environ.get("NEWS_KEY")
+import os
+GROQ_KEY = os.environ.get("GROQ_API_KEY") or "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"
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN") or "8705246619:AAEocz5YRx8-ixRCsDJERirWFr-UYY28rZs"
+TELEGRAM_CHAT = os.environ.get("TELEGRAM_CHAT") or "8607532338"
+NEWS_KEY = os.environ.get("NEWS_KEY") or "08ab77f19e6847eaa2fccf75afc252d4"
 
 client = Groq(api_key=GROQ_KEY)
 sent_news = set()
