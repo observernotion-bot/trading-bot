@@ -14,142 +14,112 @@ NEWS_KEY = os.environ.get("NEWS_KEY") or "08ab77f19e6847eaa2fccf75afc252d4"
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# ============ المعرفة الاقتصادية ============
+# ============ SYSTEM PROMPT ============
 SYSTEM_PROMPT = """
 أنت محلل اقتصادي متخصص في الأسواق المالية مع خبرة عميقة في الذهب XAUUSD و NAS100.
 
+⚠️ قواعد صارمة:
+- اكتب بالعربية الفصحى فقط — ممنوع أي حرف أجنبي
+- لا تستخدم قد / ربما / من المحتمل
+- اختر اتجاه واحد حاسم لكل أصل
+- اربط دائماً: حدث → فائدة → دولار → أصل
+- لا تتحدث عن أي أصل غير الذهب و NAS100
+
 ━━━━━━━━━━━━━━━━━━
-📚 قاعدة المعرفة الاقتصادية الكاملة:
+📚 قاعدة المعرفة الاقتصادية:
 
-🔗 1. العلاقات بين الأسواق:
-- دولار DXY يقوى → ذهب يهبط (علاقة عكسية قوية جداً)
-- عائد السندات US10Y يرتفع → ذهب يهبط / NAS100 يهبط
+🔗 العلاقات بين الأسواق:
+- DXY يقوى → ذهب يهبط / NAS100 يهبط
+- عائد السندات يرتفع → ذهب يهبط / NAS100 يهبط
 - عائد السندات يهبط → ذهب يصعد / NAS100 يصعد
-- S&P500 يصعد مع دولار يضعف = Risk-On حقيقي
-- البنوك المركزية تشتري الذهب = دعم هيكلي طويل المدى
-- منحنى العائد مقلوب = إشارة ركود قادم
+- Risk-On → NAS100 يصعد / ذهب يهبط
+- Risk-Off → ذهب يصعد / NAS100 يهبط
 
-💰 2. محركات الذهب بالترتيب:
-1. العائد الحقيقي Real Yield = عائد السندات - التضخم المتوقع
-   → Real Yield يرتفع = ذهب يهبط
-   → Real Yield يهبط = ذهب يصعد
+💰 محركات الذهب بالترتيب:
+1. العائد الحقيقي Real Yield = عائد السندات - التضخم
 2. قوة الدولار DXY
 3. توقعات الفيدرالي FED
-4. التضخم Inflation Expectations
+4. التضخم
 5. الجيوسياسية فقط إذا كانت أزمة حقيقية
 6. مشتريات البنوك المركزية
-7. طلب المستثمرين على صناديق الذهب ETF
 
-📊 3. محركات NAS100 بالترتيب:
-1. السيولة في الأسواق Liquidity
-2. توقعات الفائدة الحقيقية
-3. أرباح شركات التكنولوجيا الكبرى
-4. نمو الاقتصاد الأمريكي GDP
-5. مخاطرة المستثمرين Risk Appetite
-6. تأثير الذكاء الاصطناعي AI
+📊 محركات NAS100 بالترتيب:
+1. السيولة في الأسواق
+2. توقعات الفائدة
+3. أرباح شركات التكنولوجيا
+4. نمو الاقتصاد GDP
+5. مخاطرة المستثمرين
 
-🏦 4. قراءة قرارات الفيدرالي FED:
-- Hawkish = يريد رفع الفائدة → دولار يقوى → ذهب يهبط → NAS100 يهبط
-- Dovish = يريد خفض الفائدة → دولار يضعف → ذهب يصعد → NAS100 يصعد
-- Pause = يوقف الرفع → السوق يتفاءل → NAS100 يصعد
-- Pivot = يبدأ دورة خفض → ذهب يصعد قوياً → NAS100 يصعد قوياً
+🏦 قرارات الفيدرالي:
+- Hawkish → دولار يقوى → ذهب يهبط → NAS100 يهبط
+- Dovish → دولار يضعف → ذهب يصعد → NAS100 يصعد
+- Pause → NAS100 يصعد
+- Pivot → ذهب يصعد قوياً / NAS100 يصعد قوياً
 - المفاجأة أهم من القرار نفسه
-- QE = ضخ سيولة → ذهب يصعد / NAS100 يصعد
-- QT = سحب سيولة → ذهب يهبط / NAS100 يهبط
+- QE → ذهب يصعد / NAS100 يصعد
+- QT → ذهب يهبط / NAS100 يهبط
 
-📈 5. قراءة البيانات الاقتصادية:
-CPI: فوق التوقعات → فيد يتشدد → ذهب يهبط / NAS100 يهبط
-PCE: مرتفع → فيد يتشدد أكثر / منخفض → فيد يخفض قريباً
-NFP: قوي فوق 200 ألف → دولار يقوى → ذهب يهبط
-GDP: سلبي ربعين = ركود → Risk-Off → ذهب يصعد / NAS100 يهبط
-ISM: فوق 50 = توسع → Risk-On / دون 50 = انكماش → Risk-Off
-البطالة: ترتفع بسرعة → فيد يخفض → ذهب يصعد
+📈 البيانات الاقتصادية:
+- CPI فوق التوقعات → فيد يتشدد → ذهب يهبط / NAS100 يهبط
+- CPI دون التوقعات → فيد يلين → ذهب يصعد / NAS100 يصعد
+- NFP قوي فوق 200 ألف → دولار يقوى → ذهب يهبط
+- NFP ضعيف → فيد يفكر في خفض → ذهب يصعد
+- GDP سلبي ربعين = ركود → ذهب يصعد / NAS100 يهبط
+- ISM فوق 50 = توسع → Risk-On
+- ISM دون 50 = انكماش → Risk-Off
 
-⚠️ 6. الجيوسياسية:
+⚠️ الجيوسياسية:
 - حرب فجائية → ذهب يصعد فوراً
-- أزمة رفعت النفط → تضخم → فيد يتشدد → ذهب يتراجع لاحقاً
 - توترات USA-China → NAS100 يهبط
-- أزمة مصرفية → ذهب يصعد قوياً / NAS100 يهبط بقوة
-- ضغط سياسي على الفيد → ذهب يصعد
-- حرب عملات → ذهب يصعد
+- أزمة مصرفية → ذهب يصعد / NAS100 يهبط بقوة
 
-🔄 7. دورة الاقتصاد:
-- توسع → Risk-On → NAS100 يصعد / ذهب محايد
-- ذروة → تضخم → فيد يرفع → NAS100 يتراجع / ذهب يصعد
-- انكماش → ركود → Risk-Off → ذهب يصعد / NAS100 يهبط
-- انتعاش → فيد يخفض → NAS100 يصعد قوياً
-
-💡 8. Risk-On vs Risk-Off:
-Risk-On: NAS100 يصعد / ذهب يهبط / دولار يضعف
-Risk-Off: ذهب يصعد / NAS100 يهبط / دولار يقوى
-Mixed Stagflation: ذهب يصعد / NAS100 متذبذب
-
-🧮 9. التحليل الكمي:
+🧮 التحليل الكمي:
 - رفع فائدة 25 نقطة = ذهب -0.5% إلى -1%
-- CPI أعلى 0.2% من التوقعات = NAS100 -0.5% إلى -1.5%
-- NFP أعلى 100 ألف من التوقعات = دولار يقوى 0.3% إلى 0.5%
-- أزمة جيوسياسية مفاجئة = ذهب يصعد 1% إلى 3% فورياً
+- CPI أعلى 0.2% = NAS100 -0.5% إلى -1.5%
+- أزمة جيوسياسية = ذهب يصعد 1% إلى 3% فورياً
 
-🏛 10. البنوك المركزية العالمية:
-- FED = الأهم عالمياً
-- ECB = يؤثر على اليورو والدولار
-- BOJ = سياسة فائدة سلبية تؤثر على تدفق الأموال
-- PBoC = مشترٍ رئيسي للذهب
-- البنوك المركزية اشترت أكثر من 1000 طن ذهب سنوياً منذ 2022
-
-━━━━━━━━━━━━━━━━━━
-⚠️ قواعد التحليل الصارمة:
-1. اكتب باللغة العربية الفصحى فقط — ممنوع أي حرف أجنبي
-2. لا تقل قد / ربما / من المحتمل — كن حاسماً
-3. دائماً اشرح السلسلة: الحدث → الفائدة → الدولار → الأصول
-4. لا تتحدث عن أصول غير الذهب و NAS100
-5. استخدم الأرقام والنسب عند الإمكان
-6. المفاجأة أهم من الرقم نفسه
+🔥 قاعدة العامل المسيطر:
+إذا تعارضت العوامل → اختر العامل الأقوى تأثيراً فقط
 """
 
 # ============ هيكل التقارير ============
-MORNING_STRUCTURE = """اكتب تقرير الصباح بهذا الهيكل:
+MORNING_STRUCTURE = """اكتب تقرير الصباح:
 
 📅 *تقرير الصباح — {date} — 08:00 المغرب* 🌅
 
 ━━━━━━━━━━━━━━━━━━
-📌 *ملخص الليل والصباح الباكر*
+📌 *ملخص الليل والصباح*
 🌏 آسيا: [أهم حدث + تأثيره]
 🌍 أوروبا: [أهم حدث + تأثيره]
-🌎 أمريكا: [ما ينتظر اليوم من بيانات]
+🌎 أمريكا: [ما ينتظر اليوم]
 
 ━━━━━━━━━━━━━━━━━━
-🏦 *البنوك المركزية والسياسة النقدية*
-[أي تصريحات أو قرارات خلال الليل]
-
-⚠️ *الجيوسياسية*
-[أهم التوترات الحالية وتأثيرها]
+🧠 *العامل المسيطر اليوم: {dominant}*
+درجة الثقة: {confidence}%
+حالة السوق: {regime}
 
 ━━━━━━━━━━━━━━━━━━
-🧠 *التحليل والمنطق الاقتصادي*
-الأحداث → الفائدة → الدولار → النتيجة
+🔗 *سلسلة التأثير:*
+الحدث → الفائدة → الدولار → الأصول
 
 ━━━━━━━━━━━━━━━━━━
 💰 *الذهب XAUUSD*
 • الاتجاه: [صعود / هبوط / محايد]
-• السبب الرئيسي: [جملة حاسمة]
+• السبب: [جملة حاسمة]
 • المستويات: دعم ... / مقاومة ...
-• مدة التأثير: [ساعات / أيام]
 
 📊 *NAS100*
 • الاتجاه: [صعود / هبوط / محايد]
-• السبب الرئيسي: [جملة حاسمة]
+• السبب: [جملة حاسمة]
 • المستويات: دعم ... / مقاومة ...
-• مدة التأثير: [ساعات / أيام]
 
 ━━━━━━━━━━━━━━━━━━
 🔥 *البايز الصباحي*
 💰 الذهب: [Bullish / Bearish / Neutral]
 📊 NAS100: [Bullish / Bearish / Neutral]
-🌡 حالة السوق: [Risk-On / Risk-Off / Mixed]
-⚡ تنبيه الصباح: [أهم حدث يجب مراقبته اليوم]"""
+⚡ تنبيه: [أهم حدث يجب مراقبته اليوم]"""
 
-MIDDAY_STRUCTURE = """اكتب تقرير الظهر بهذا الهيكل:
+MIDDAY_STRUCTURE = """اكتب تقرير الظهر:
 
 📅 *تقرير الظهر — {date} — 14:00 المغرب* ☀️
 
@@ -157,79 +127,129 @@ MIDDAY_STRUCTURE = """اكتب تقرير الظهر بهذا الهيكل:
 📌 *ملخص الصباح*
 [أهم ما حدث من الصباح حتى الآن]
 
-📊 *البيانات الاقتصادية الصادرة اليوم*
-[CPI / NFP / GDP مع التوقعات والنتائج الفعلية]
+📊 *البيانات الصادرة اليوم*
+[الفعلي مقابل التوقعات → المفاجأة → رد فعل السوق]
 
 ━━━━━━━━━━━━━━━━━━
-🧠 *التحليل العميق*
-البيانات الفعلية مقابل التوقعات → المفاجأة → رد فعل السوق
+🧠 *العامل المسيطر الآن: {dominant}*
+درجة الثقة: {confidence}%
+حالة السوق: {regime}
 
 ━━━━━━━━━━━━━━━━━━
 💰 *الذهب XAUUSD*
 • الاتجاه المحدث: [صعود / هبوط / محايد]
-• هل تغير الاتجاه عن الصباح؟ [نعم/لا + السبب]
+• هل تغير عن الصباح؟ [نعم/لا + السبب]
 • المستويات: دعم ... / مقاومة ...
 
 📊 *NAS100*
 • الاتجاه المحدث: [صعود / هبوط / محايد]
-• هل تغير الاتجاه عن الصباح؟ [نعم/لا + السبب]
+• هل تغير عن الصباح؟ [نعم/لا + السبب]
 • المستويات: دعم ... / مقاومة ...
 
 ━━━━━━━━━━━━━━━━━━
 📊 *السيناريوهات لبقية اليوم*
-🟢 إذا حدث [X] → الذهب [Y] / NAS100 [Z]
-🔴 إذا حدث [X] → الذهب [Y] / NAS100 [Z]
+🟢 إذا حدث [X] → ذهب [Y] / NAS100 [Z]
+🔴 إذا حدث [X] → ذهب [Y] / NAS100 [Z]
 
 ━━━━━━━━━━━━━━━━━━
-🔥 *البايز الظهري المحدث*
+🔥 *البايز الظهري*
 💰 الذهب: [Bullish / Bearish / Neutral]
 📊 NAS100: [Bullish / Bearish / Neutral]
-🌡 حالة السوق: [Risk-On / Risk-Off / Mixed]
-⚡ القوة المسيطرة: [الدولار / الفيد / الجيوسياسية / السيولة]"""
+⚡ القوة المسيطرة: [الدولار / الفيد / الجيوسياسية]"""
 
-EVENING_STRUCTURE = """اكتب تقرير المساء بهذا الهيكل:
+EVENING_STRUCTURE = """اكتب تقرير المساء:
 
 📅 *تقرير المساء — {date} — 20:00 المغرب* 🌙
 
 ━━━━━━━━━━━━━━━━━━
 📌 *ملخص اليوم الكامل*
-[أهم 4 أحداث اقتصادية وجيوسياسية اليوم]
+[أهم 4 أحداث اليوم]
 
-🏆 أهم حدث اليوم:
+🏆 *أهم حدث اليوم:*
 الحدث → الفائدة → الدولار → النتيجة
 
 ━━━━━━━━━━━━━━━━━━
-🧠 *التحليل الشامل لليوم*
-[ربط كل أحداث اليوم وشرح الصورة الكاملة]
+🧠 *العامل المسيطر اليوم: {dominant}*
+درجة الثقة: {confidence}%
+حالة السوق: {regime}
 
 ━━━━━━━━━━━━━━━━━━
 💰 *تحليل الذهب اليومي*
 • أداء اليوم: [صعد / هبط / ثبت]
-• السبب الرئيسي: [جملة حاسمة]
+• السبب: [جملة حاسمة]
 • البايز للغد: [Bullish / Bearish / Neutral]
 • المستويات غداً: دعم ... / مقاومة ...
 
 📊 *تحليل NAS100 اليومي*
 • أداء اليوم: [صعد / هبط / ثبت]
-• السبب الرئيسي: [جملة حاسمة]
+• السبب: [جملة حاسمة]
 • البايز للغد: [Bullish / Bearish / Neutral]
 • المستويات غداً: دعم ... / مقاومة ...
 
 ━━━━━━━━━━━━━━━━━━
 📊 *السيناريوهات للغد*
-🟢 المتفائل: الشرط [X] → الذهب [Y] / NAS100 [Z]
-🟡 الأساسي الأرجح: الشرط [X] → الذهب [Y] / NAS100 [Z]
-🔴 المتشائم: الشرط [X] → الذهب [Y] / NAS100 [Z]
+🟢 المتفائل: [الشرط + النتيجة]
+🟡 الأساسي: [الشرط + النتيجة]
+🔴 المتشائم: [الشرط + النتيجة]
 
 ━━━━━━━━━━━━━━━━━━
-🎯 *الخلاصة النهائية ليوم غد*
-• اتجاه الذهب: [صعود / هبوط / محايد]
-• اتجاه NAS100: [صعود / هبوط / محايد]
+🎯 *الخلاصة النهائية*
+• الذهب: [صعود / هبوط / محايد]
+• NAS100: [صعود / هبوط / محايد]
 • حالة السوق: [Risk-On / Risk-Off / Mixed]
-• القوة المسيطرة: [الدولار / الفيد / الجيوسياسية / السيولة]
+• القوة المسيطرة: [الدولار / الفيد / الجيوسياسية]
 • أهم حدث غداً: [حدث واحد محدد]"""
 
-# ============ الدوال الأساسية ============
+# ============ Dominant Driver Engine ============
+def detect_dominant_driver(headlines):
+    text = " ".join(headlines).lower()
+    scores = {
+        "الفيدرالي": 0,
+        "التضخم": 0,
+        "العوائد": 0,
+        "الجيوسياسية": 0,
+        "السيولة": 0,
+        "أرباح التكنولوجيا": 0
+    }
+    if any(x in text for x in ["fed", "interest", "powell", "fomc"]):
+        scores["الفيدرالي"] += 3
+    if any(x in text for x in ["cpi", "inflation", "pce", "price"]):
+        scores["التضخم"] += 2
+    if any(x in text for x in ["bond", "yield", "treasury"]):
+        scores["العوائد"] += 2
+    if any(x in text for x in ["war", "iran", "china", "russia", "conflict"]):
+        scores["الجيوسياسية"] += 2
+    if any(x in text for x in ["qe", "qt", "liquidity"]):
+        scores["السيولة"] += 2
+    if any(x in text for x in ["earnings", "ai", "nvidia", "apple", "tech"]):
+        scores["أرباح التكنولوجيا"] += 2
+    dominant = max(scores, key=scores.get)
+    return dominant, scores
+
+# ============ Confidence Engine ============
+def calculate_confidence(scores):
+    total = sum(scores.values())
+    if total == 0:
+        return 50
+    return min(int((max(scores.values()) / total) * 100), 95)
+
+# ============ Market Regime ============
+def detect_market_regime(headlines):
+    text = " ".join(headlines).lower()
+    risk_on = sum(x in text for x in ["earnings", "growth", "ai", "rally"])
+    risk_off = sum(x in text for x in ["war", "inflation", "recession", "crash"])
+    if risk_on > risk_off + 1:
+        return "Risk-On"
+    elif risk_off > risk_on + 1:
+        return "Risk-Off"
+    return "Mixed"
+
+# ============ فلترة الأخبار ============
+def filter_relevant_news(articles):
+    keywords = ["fed", "inflation", "cpi", "pce", "nfp", "yield", "gold", "nasdaq", "war", "ai", "earnings", "recession"]
+    return [a for a in articles if any(k in a.get("title", "").lower() for k in keywords)]
+
+# ============ Telegram ============
 def send_telegram(msg, chat_id=TELEGRAM_CHAT):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
@@ -237,7 +257,8 @@ def send_telegram(msg, chat_id=TELEGRAM_CHAT):
     except Exception as e:
         print(f"Telegram error: {e}")
 
-def get_news(query="gold OR nasdaq OR fed OR inflation", count=10):
+# ============ الأخبار ============
+def get_news(query, count=10):
     url = f"https://newsapi.org/v2/everything?q={query}&language=en&pageSize={count}&sortBy=publishedAt&apiKey={NEWS_KEY}"
     try:
         r = requests.get(url, timeout=10)
@@ -245,44 +266,45 @@ def get_news(query="gold OR nasdaq OR fed OR inflation", count=10):
     except:
         return []
 
+# ============ التقرير الرئيسي ============
 def daily_report():
     print(f"[{datetime.now()}] التقرير اليومي...")
-    send_telegram("⏳ *جاري اعداد التقرير...*\nيبحث البوت في الاخبار العالمية الان 🔄")
+    send_telegram("⏳ *جاري اعداد التقرير...*\nيبحث البوت في الاخبار العالمية 🔄")
 
-    a1 = get_news(query="federal reserve FED interest rate inflation CPI PCE", count=8)
-    a2 = get_news(query="gold price XAU central bank buying", count=5)
-    a3 = get_news(query="nasdaq technology stocks earnings AI", count=5)
-    a4 = get_news(query="war conflict geopolitical china russia oil", count=5)
-    a5 = get_news(query="dollar DXY treasury yields bonds recession", count=5)
-    a6 = get_news(query="ECB BOJ economy GDP unemployment NFP", count=4)
+    articles = []
+    articles += get_news("fed inflation cpi pce powell fomc", 6)
+    articles += get_news("gold xau central bank buying", 5)
+    articles += get_news("nasdaq ai earnings technology", 5)
+    articles += get_news("war geopolitics oil recession", 5)
+    articles += get_news("dollar DXY treasury yields bonds", 4)
 
-    all_articles = a1 + a2 + a3 + a4 + a5 + a6
-    if not all_articles:
-        send_telegram("تعذر الحصول على اخبار كافية")
-        return
+    articles = filter_relevant_news(articles)
+    titles = [a["title"] for a in articles if a.get("title")]
 
-    headlines = "\n".join([
-        f"[{a.get('publishedAt', '')[:16].replace('T', ' ')}] {a['title']}"
-        for a in all_articles[:25] if a.get('title')
-    ])
+    dominant, scores = detect_dominant_driver(titles)
+    confidence = calculate_confidence(scores)
+    regime = detect_market_regime(titles)
+
+    news_text = "\n".join([f"- {a['title']}" for a in articles[:15]])
 
     hour = datetime.now().hour
-    date = datetime.now().strftime('%Y/%m/%d')
+    date = datetime.now().strftime("%Y/%m/%d")
 
     if hour < 12:
-        structure = MORNING_STRUCTURE.format(date=date)
+        structure = MORNING_STRUCTURE.format(date=date, dominant=dominant, confidence=confidence, regime=regime)
     elif hour < 17:
-        structure = MIDDAY_STRUCTURE.format(date=date)
+        structure = MIDDAY_STRUCTURE.format(date=date, dominant=dominant, confidence=confidence, regime=regime)
     else:
-        structure = EVENING_STRUCTURE.format(date=date)
+        structure = EVENING_STRUCTURE.format(date=date, dominant=dominant, confidence=confidence, regime=regime)
 
     try:
         resp = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
+            temperature=0.3,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"""الاخبار العالمية خلال اخر 24 ساعة:
-{headlines}
+                {"role": "user", "content": f"""الاخبار العالمية اليوم:
+{news_text}
 
 {structure}
 
@@ -291,29 +313,41 @@ def daily_report():
             max_tokens=2500
         )
         report = resp.choices[0].message.content
-        if len(report) < 300:
+        if len(report) < 200:
             send_telegram("التقرير لم يكتمل — سيعاد المحاولة")
             return
         send_telegram(report)
         print(f"[{datetime.now()}] التقرير ارسل بنجاح")
     except Exception as e:
-        send_telegram(f"خطا في التقرير: {e}")
+        send_telegram(f"خطا: {e}")
 
+# ============ Chatbot ============
 def answer_question(user_question, chat_id):
     try:
-        articles = get_news(query=user_question, count=5)
+        articles = get_news(user_question, 5)
         news_context = ""
         if articles:
-            news_context = "اخر الاخبار ذات الصلة:\n"
-            news_context += "\n".join([f"- {a['title']}" for a in articles[:5] if a.get('title')])
+            news_context = "اخر الاخبار:\n"
+            news_context += "\n".join([f"- {a['title']}" for a in articles[:5] if a.get("title")])
+
+        titles = [a["title"] for a in articles if a.get("title")]
+        dominant, scores = detect_dominant_driver(titles)
+        confidence = calculate_confidence(scores)
+        regime = detect_market_regime(titles)
+
         resp = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
+            temperature=0.3,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": f"""السؤال: {user_question}
 {news_context}
 
-اجب باللغة العربية الفصحى فقط بهذا الشكل:
+العامل المسيطر: {dominant}
+درجة الثقة: {confidence}%
+حالة السوق: {regime}
+
+اجب باللغة العربية الفصحى فقط:
 
 📰 *الموضوع:*
 [شرح بسيط في جملتين]
@@ -321,9 +355,11 @@ def answer_question(user_question, chat_id):
 🧠 *التحليل:*
 الحدث → الفائدة → الدولار → الذهب و NAS100
 
-💰 *الذهب:* [الاتجاه الحاسم + السبب]
-📊 *NAS100:* [الاتجاه الحاسم + السبب]
+💰 *الذهب:* [الاتجاه + السبب]
+📊 *NAS100:* [الاتجاه + السبب]
 
+🔥 *العامل المسيطر:* {dominant}
+📊 *درجة الثقة:* {confidence}%
 ⚡ *درجة الخطر:* 🟢 منخفض / 🟡 متوسط / 🔴 عالي"""}
             ],
             max_tokens=600
@@ -332,6 +368,7 @@ def answer_question(user_question, chat_id):
     except Exception as e:
         return f"خطا: {e}"
 
+# ============ Telegram Polling ============
 def telegram_polling():
     offset = None
     print("البوت جاهز...")
@@ -376,6 +413,7 @@ def telegram_polling():
             print(f"Polling error: {e}")
             time.sleep(5)
 
+# ============ Scheduler ============
 def schedule_jobs():
     schedule.every().day.at("07:00").do(daily_report)  # 08:00 المغرب
     schedule.every().day.at("13:00").do(daily_report)  # 14:00 المغرب
@@ -385,6 +423,7 @@ def schedule_jobs():
         schedule.run_pending()
         time.sleep(60)
 
+# ============ التشغيل ============
 if __name__ == "__main__":
     print("البوت يعمل...")
     send_telegram(
